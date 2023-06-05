@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.List;
 
 public class JasperDesignBuilder<T> {
+    private Integer MAX_WIDTH = 555;
     private Integer HEIGHT_DEFAULT_HEADER = 15;
     private Integer HEIGHT_DEFAULT_COLUMN = 15;
     private Integer HEIGHT_SUB_HEADER = 30;
@@ -26,19 +27,22 @@ public class JasperDesignBuilder<T> {
     private Integer COLUMN_COUNT = 0;
     protected final JasperDesign design = new JasperDesign();
     protected final JRDesignBand header = new JRDesignBand();
-    protected final JRDesignBand element = new JRDesignBand();
+    protected final JRDesignBand field = new JRDesignBand();
     protected final JRDesignBand footer = new JRDesignBand();
     protected final JRDesignBand noData = new JRDesignBand();
 
     private java.util.List<T> dataList = new ArrayList<T>();
     private Map<String, Object> parameters = new HashMap<>();
     private byte[] report = null;
+
+    private List<Integer> GROUP_HEADER_POS = new ArrayList<>();
     private String type = "pdf";
     private boolean havingSubHeader = false;
 
     private JasperPrint jasperPrint = null;
     private List<JRDesignTextField> groupHeaders = new ArrayList<>();
     private List<JRDesignTextField> headers = new ArrayList<>();
+    private List<JRDesignTextField> fields = new ArrayList<>();
 
     public JasperDesignBuilder(String name) {
         design.setName(name);
@@ -65,14 +69,17 @@ public class JasperDesignBuilder<T> {
 
         textField.setBlankWhenNull(true);
         textField.setX(COLUMN_COUNT * 100);
-        if (GROUP_HEADER_COUNT > 0) {
+        if (havingSubHeader && GROUP_HEADER_COUNT > 0) {
             textField.setY(HEIGHT_DEFAULT_HEADER);
+            textField.setHeight(HEIGHT_DEFAULT_HEADER);
             GROUP_HEADER_COUNT--;
-        } else {
+        } else if(havingSubHeader){
+            textField.setHeight(HEIGHT_SUB_HEADER);
+        }else{
+            textField.setHeight(HEIGHT_DEFAULT_HEADER);
             textField.setY(0);
         }
         textField.setWidth(WEIDTH_DEFAULT);
-        textField.setHeight(((havingSubHeader && COLUMN_COUNT>0) || !havingSubHeader)?HEIGHT_DEFAULT_HEADER:HEIGHT_SUB_HEADER);
         textField.setHorizontalTextAlign(HorizontalTextAlignEnum.CENTER);
         textField.setExpression(new JRDesignExpression(String.format("$P{%s}", property)));
         textField.setForecolor(new Color(67, 108, 168));
@@ -85,12 +92,12 @@ public class JasperDesignBuilder<T> {
 //        header.addElement(textField);
 
         //data
-        element.setHeight(HEIGHT_DEFAULT_COLUMN);
+        this.field.setHeight(HEIGHT_DEFAULT_COLUMN);
 
         JRDesignTextField tf1 = new JRDesignTextField();
         setBorderLineWidthOne(tf1);
         tf1.setBlankWhenNull(true);
-        tf1.setX(element.getElements().length * 100);
+        tf1.setX(this.fields.size() * 100);
         tf1.setY(0);
         tf1.setWidth(WEIDTH_DEFAULT);
         tf1.setHeight(HEIGHT_DEFAULT_COLUMN);
@@ -98,7 +105,8 @@ public class JasperDesignBuilder<T> {
         tf1.setExpression(new JRDesignExpression(String.format("$F{%s}", property)));
         tf1.setStretchWithOverflow(true);
         tf1.setMode(ModeEnum.OPAQUE);
-        element.addElement(tf1);
+        fields.add(tf1);
+//        this.field.addElement(tf1);
 
 //        parameter
         JRDesignParameter parameter = new JRDesignParameter();
@@ -149,12 +157,14 @@ public class JasperDesignBuilder<T> {
             GROUP_HEADER_COUNT = numberOfHeader;
         }
 
+        GROUP_HEADER_POS.add(COLUMN_COUNT);
+
         JRDesignTextField textField = new JRDesignTextField();
         setBorderLineWidthOne(textField);
         textField.setBlankWhenNull(true);
         textField.setX(headers.size() * 100);
         textField.setY(0);
-        textField.setWidth(WEIDTH_DEFAULT * numberOfHeader);
+        textField.setWidth(numberOfHeader);
         textField.setHeight(HEIGHT_DEFAULT_HEADER);
         textField.setHorizontalTextAlign(HorizontalTextAlignEnum.CENTER);
         textField.setExpression(new JRDesignExpression(String.format("$P{%s}", subHeaderTitle)));
@@ -163,12 +173,12 @@ public class JasperDesignBuilder<T> {
         textField.setMode(ModeEnum.OPAQUE);
         groupHeaders.add(textField);
 
-        //        parameter
+//                parameter
         JRDesignParameter parameter = new JRDesignParameter();
         parameter.setName(subHeaderTitle);
         parameter.setValueClass(String.class);
         design.addParameter(parameter);
-//
+
         parameters.put(subHeaderTitle, subHeaderTitle);
 
         return this;
@@ -246,16 +256,24 @@ public class JasperDesignBuilder<T> {
     }
 
     public JasperDesignBuilder build() throws JRException {
-        for (JRDesignTextField e : headers) {
-            header.addElement(e);
+        for (int i=0;i<groupHeaders.size();i++) {
+            this.groupHeaders.get(i).setX(GROUP_HEADER_POS.get(i)*(MAX_WIDTH/fields.size()));
+            this.groupHeaders.get(i).setWidth(this.groupHeaders.get(i).getWidth()*(MAX_WIDTH/fields.size()));
+            header.addElement(this.groupHeaders.get(i));
         }
-        for (JRDesignTextField field : groupHeaders) {
-            header.addElement(field);
+        for (int i=0;i<headers.size();i++) {
+            this.headers.get(i).setWidth(MAX_WIDTH/fields.size());
+            this.headers.get(i).setX((MAX_WIDTH/fields.size())*i);
+            this.header.addElement(headers.get(i));
         }
-
+        for (int i=0;i<fields.size();i++) {
+            this.fields.get(i).setWidth(MAX_WIDTH/fields.size());
+            this.fields.get(i).setX((MAX_WIDTH/fields.size())*i);
+            this.field.addElement(fields.get(i));
+        }
 
         design.setColumnHeader(header);
-        ((JRDesignSection) design.getDetailSection()).addBand(element);
+        ((JRDesignSection) design.getDetailSection()).addBand(field);
 
         design.setPageFooter(footer);
         design.setNoData(noData);

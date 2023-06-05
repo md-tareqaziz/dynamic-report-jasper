@@ -46,6 +46,7 @@ class DynamicReportJasperApplicationTests {
 				.addGroup(2,"Job")
 				.addColumn("Designation", "designation", String.class, 10)
 				.addColumn("Salary", "salary", String.class, 10)
+				.addColumn("DOB", "doj", String.class, 10)
 				.addData(employees)
 				.addParameters(parameters)
 				.addPageFooter()
