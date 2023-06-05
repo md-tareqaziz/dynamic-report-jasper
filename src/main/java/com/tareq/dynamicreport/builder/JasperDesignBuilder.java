@@ -1,57 +1,99 @@
 package com.tareq.dynamicreport.builder;
 
-import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import net.sf.jasperreports.engine.design.*;
+import net.sf.jasperreports.engine.export.ooxml.JRXlsxExporter;
 import net.sf.jasperreports.engine.type.HorizontalTextAlignEnum;
 import net.sf.jasperreports.engine.type.ModeEnum;
+import net.sf.jasperreports.engine.type.OrientationEnum;
+import net.sf.jasperreports.engine.type.VerticalTextAlignEnum;
+import net.sf.jasperreports.export.SimpleExporterInput;
+import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
+import net.sf.jasperreports.export.SimpleXlsxReportConfiguration;
 
 import java.awt.*;
+import java.io.ByteArrayOutputStream;
+import java.util.*;
+import java.util.List;
 
-public class JasperDesignBuilder {
+public class JasperDesignBuilder<T> {
+    private Integer HEIGHT_DEFAULT_HEADER = 15;
+    private Integer HEIGHT_DEFAULT_COLUMN = 15;
+    private Integer HEIGHT_SUB_HEADER = 30;
+    private Integer WEIDTH_DEFAULT = 100;
+    private Integer GROUP_HEADER_COUNT = 0;
+    private Integer COLUMN_COUNT = 0;
     protected final JasperDesign design = new JasperDesign();
     protected final JRDesignBand header = new JRDesignBand();
     protected final JRDesignBand element = new JRDesignBand();
     protected final JRDesignBand footer = new JRDesignBand();
     protected final JRDesignBand noData = new JRDesignBand();
 
+    private java.util.List<T> dataList = new ArrayList<T>();
+    private Map<String, Object> parameters = new HashMap<>();
+    private byte[] report = null;
+    private String type = "pdf";
+    private boolean havingSubHeader = false;
+
+    private JasperPrint jasperPrint = null;
+    private List<JRDesignTextField> groupHeaders = new ArrayList<>();
+    private List<JRDesignTextField> headers = new ArrayList<>();
+
     public JasperDesignBuilder(String name) {
         design.setName(name);
     }
 
-    public JasperDesignBuilder addColumn(String title, String property, String className, int width) throws JRException {
+    public JasperDesignBuilder addColumn(String title, String property, Class className, int width) throws JRException {
         JRDesignField field = new JRDesignField();
         field.setName(property);
-        field.setValueClassName(className);
+        field.setValueClass(className);
         design.addField(field);
-
+        design.setOrientation(OrientationEnum.PORTRAIT);
 
         //Header
-        header.setHeight(30);
+        if (havingSubHeader) {
+            header.setHeight(HEIGHT_SUB_HEADER);
+        } else {
+            header.setHeight(HEIGHT_SUB_HEADER);
+        }
+
 
         JRDesignTextField textField = new JRDesignTextField();
+
+        setBorderLineWidthOne(textField);
+
         textField.setBlankWhenNull(true);
-        textField.setX(header.getElements().length*100);
-        textField.setY(0);
-        textField.setWidth(100);
-        textField.setHeight(15);
+        textField.setX(COLUMN_COUNT * 100);
+        if (GROUP_HEADER_COUNT > 0) {
+            textField.setY(HEIGHT_DEFAULT_HEADER);
+            GROUP_HEADER_COUNT--;
+        } else {
+            textField.setY(0);
+        }
+        textField.setWidth(WEIDTH_DEFAULT);
+        textField.setHeight(((havingSubHeader && COLUMN_COUNT>0) || !havingSubHeader)?HEIGHT_DEFAULT_HEADER:HEIGHT_SUB_HEADER);
         textField.setHorizontalTextAlign(HorizontalTextAlignEnum.CENTER);
         textField.setExpression(new JRDesignExpression(String.format("$P{%s}", property)));
         textField.setForecolor(new Color(67, 108, 168));
         textField.setBackcolor(new Color(.95f, .95f, .95f, 0.5f));
         textField.setMode(ModeEnum.OPAQUE);
-
-        header.addElement(textField);
+        textField.setHorizontalTextAlign(HorizontalTextAlignEnum.CENTER);
+        textField.setVerticalTextAlign(VerticalTextAlignEnum.MIDDLE);
+        textField.setBold(true);
+        headers.add(textField);
+//        header.addElement(textField);
 
         //data
-
-        element.setHeight(30);
+        element.setHeight(HEIGHT_DEFAULT_COLUMN);
 
         JRDesignTextField tf1 = new JRDesignTextField();
+        setBorderLineWidthOne(tf1);
         tf1.setBlankWhenNull(true);
-        tf1.setX(element.getElements().length*100);
+        tf1.setX(element.getElements().length * 100);
         tf1.setY(0);
-        tf1.setWidth(100);
-        tf1.setHeight(30);
+        tf1.setWidth(WEIDTH_DEFAULT);
+        tf1.setHeight(HEIGHT_DEFAULT_COLUMN);
         tf1.setHorizontalTextAlign(HorizontalTextAlignEnum.CENTER);
         tf1.setExpression(new JRDesignExpression(String.format("$F{%s}", property)));
         tf1.setStretchWithOverflow(true);
@@ -61,9 +103,17 @@ public class JasperDesignBuilder {
 //        parameter
         JRDesignParameter parameter = new JRDesignParameter();
         parameter.setName(property);
-        parameter.setValueClassName(className);
+        parameter.setValueClass(String.class);
         design.addParameter(parameter);
+//
+        parameters.put(property, title);
 
+        COLUMN_COUNT++;
+        return this;
+    }
+
+    public JasperDesignBuilder addType(String type) {
+        this.type = type;
         return this;
     }
 
@@ -83,6 +133,53 @@ public class JasperDesignBuilder {
         design.setTitle(titleBand);
 
         return this;
+    }
+
+    public JasperDesignBuilder addGroup(Integer numberOfHeader, String subHeaderTitle) throws JRException {
+        for (JRDesignTextField e : headers) {
+            e.setHeight(HEIGHT_SUB_HEADER);
+            e.setHorizontalTextAlign(HorizontalTextAlignEnum.CENTER);
+            e.setVerticalTextAlign(VerticalTextAlignEnum.MIDDLE);
+        }
+//        headers=new ArrayList<>();
+        havingSubHeader = true;
+        if (GROUP_HEADER_COUNT > 0) {
+            throw new RuntimeException("Add column to previous group still pending.");
+        } else {
+            GROUP_HEADER_COUNT = numberOfHeader;
+        }
+
+        JRDesignTextField textField = new JRDesignTextField();
+        setBorderLineWidthOne(textField);
+        textField.setBlankWhenNull(true);
+        textField.setX(headers.size() * 100);
+        textField.setY(0);
+        textField.setWidth(WEIDTH_DEFAULT * numberOfHeader);
+        textField.setHeight(HEIGHT_DEFAULT_HEADER);
+        textField.setHorizontalTextAlign(HorizontalTextAlignEnum.CENTER);
+        textField.setExpression(new JRDesignExpression(String.format("$P{%s}", subHeaderTitle)));
+        textField.setForecolor(new Color(67, 108, 168));
+        textField.setBackcolor(new Color(.95f, .95f, .95f, 0.5f));
+        textField.setMode(ModeEnum.OPAQUE);
+        groupHeaders.add(textField);
+
+        //        parameter
+        JRDesignParameter parameter = new JRDesignParameter();
+        parameter.setName(subHeaderTitle);
+        parameter.setValueClass(String.class);
+        design.addParameter(parameter);
+//
+        parameters.put(subHeaderTitle, subHeaderTitle);
+
+        return this;
+    }
+
+    private void setBorderLineWidthOne(JRDesignTextField textField) {
+        JRLineBox box= textField.getLineBox();
+        box.getLeftPen().setLineWidth(1);
+        box.getRightPen().setLineWidth(1);
+        box.getTopPen().setLineWidth(1);
+        box.getBottomPen().setLineWidth(1);
     }
 
     public JasperDesignBuilder addPageFooter() {
@@ -116,32 +213,12 @@ public class JasperDesignBuilder {
         return this;
     }
 
-    public JasperDesignBuilder addParameters() throws JRException {
+    public JasperDesignBuilder addParameters(Map<String, Object> parameters) throws JRException {
+//        this.parameters.putAll(parameters);
         JRDesignParameter par = new JRDesignParameter();
         par.setName("createdBy");
         par.setValueClass(String.class);
         design.addParameter(par);
-
-        JRDesignParameter par2 = new JRDesignParameter();
-        par2.setName("id");
-        par2.setValueClass(String.class);
-        design.addParameter(par2);
-
-        JRDesignParameter par3 = new JRDesignParameter();
-        par3.setName("name");
-        par3.setValueClass(String.class);
-        design.addParameter(par3);
-
-        JRDesignParameter par4 = new JRDesignParameter();
-        par4.setName("designation");
-        par4.setValueClass(String.class);
-        design.addParameter(par4);
-
-        JRDesignParameter par5 = new JRDesignParameter();
-        par5.setName("salary");
-        par5.setValueClass(String.class);
-        design.addParameter(par5);
-
         return this;
     }
 
@@ -163,13 +240,56 @@ public class JasperDesignBuilder {
         return this;
     }
 
-    public JasperDesign build() {
+    public JasperDesignBuilder addData(List<T> list) {
+        this.dataList = list;
+        return this;
+    }
+
+    public JasperDesignBuilder build() throws JRException {
+        for (JRDesignTextField e : headers) {
+            header.addElement(e);
+        }
+        for (JRDesignTextField field : groupHeaders) {
+            header.addElement(field);
+        }
+
+
         design.setColumnHeader(header);
         ((JRDesignSection) design.getDetailSection()).addBand(element);
 
         design.setPageFooter(footer);
         design.setNoData(noData);
 
+        JasperReport jasperReport = JasperCompileManager.compileReport(design);
+        JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(dataList);
+        this.jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
+        if (type.equalsIgnoreCase("xlsx")) {
+            JRXlsxExporter exporter = new JRXlsxExporter();
+            exporter.setExporterInput(new SimpleExporterInput(this.jasperPrint));
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+            exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(byteStream));
+            SimpleXlsxReportConfiguration configuration = new SimpleXlsxReportConfiguration();
+            configuration.setDetectCellType(true);//Set configuration as you like it!!
+            configuration.setCollapseRowSpan(false);
+            exporter.setConfiguration(configuration);
+            exporter.exportReport();
+            report = byteStream.toByteArray();
+        } else {
+            report = JasperExportManager.exportReportToPdf(jasperPrint);
+        }
+
+        return this;
+    }
+
+    public byte[] getReport() {
+        return report;
+    }
+
+    public void print(String path) throws JRException {
+        JasperExportManager.exportReportToPdfFile(this.jasperPrint, path);
+    }
+
+    public JasperDesign getDesign() {
         return design;
     }
 }
