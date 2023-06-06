@@ -62,11 +62,16 @@ public class JasperDesignBuilder<T> {
             header.setHeight(HEIGHT_SUB_HEADER);
         }
 
+//        JRDesignStyle headerStyle = new JRDesignStyle();
+//        headerStyle.setName("headerStyle");
+//        headerStyle.setDefault(true);
+//        headerStyle.setFontSize(10f);
+//        headerStyle.setPdfFontName("Helvetica");
+//        headerStyle.setPdfEncoding("UTF-8");
+//        headerStyle.setBold(true);
 
         JRDesignTextField textField = new JRDesignTextField();
-
         setBorderLineWidthOne(textField);
-
         textField.setBlankWhenNull(true);
         textField.setX(COLUMN_COUNT * 100);
         if (havingSubHeader && GROUP_HEADER_COUNT > 0) {
@@ -82,12 +87,13 @@ public class JasperDesignBuilder<T> {
         textField.setWidth(WEIDTH_DEFAULT);
         textField.setHorizontalTextAlign(HorizontalTextAlignEnum.CENTER);
         textField.setExpression(new JRDesignExpression(String.format("$P{%s}", property)));
-        textField.setForecolor(new Color(67, 108, 168));
-        textField.setBackcolor(new Color(.95f, .95f, .95f, 0.5f));
+//        textField.setForecolor(Color.white);
+        textField.setBackcolor(Color.LIGHT_GRAY);
         textField.setMode(ModeEnum.OPAQUE);
         textField.setHorizontalTextAlign(HorizontalTextAlignEnum.CENTER);
         textField.setVerticalTextAlign(VerticalTextAlignEnum.MIDDLE);
-        textField.setBold(true);
+//        textField.setStyle(headerStyle);
+//        textField.set
         headers.add(textField);
 //        header.addElement(textField);
 
@@ -168,8 +174,8 @@ public class JasperDesignBuilder<T> {
         textField.setHeight(HEIGHT_DEFAULT_HEADER);
         textField.setHorizontalTextAlign(HorizontalTextAlignEnum.CENTER);
         textField.setExpression(new JRDesignExpression(String.format("$P{%s}", subHeaderTitle)));
-        textField.setForecolor(new Color(67, 108, 168));
-        textField.setBackcolor(new Color(.95f, .95f, .95f, 0.5f));
+//        textField.setForecolor(new Color(67, 108, 168));
+        textField.setBackcolor(Color.LIGHT_GRAY);
         textField.setMode(ModeEnum.OPAQUE);
         groupHeaders.add(textField);
 
@@ -256,19 +262,20 @@ public class JasperDesignBuilder<T> {
     }
 
     public JasperDesignBuilder build() throws JRException {
+        int avgWidth=MAX_WIDTH/fields.size();
         for (int i=0;i<groupHeaders.size();i++) {
-            this.groupHeaders.get(i).setX(GROUP_HEADER_POS.get(i)*(MAX_WIDTH/fields.size()));
-            this.groupHeaders.get(i).setWidth(this.groupHeaders.get(i).getWidth()*(MAX_WIDTH/fields.size()));
+            this.groupHeaders.get(i).setX(GROUP_HEADER_POS.get(i)*avgWidth);
+            this.groupHeaders.get(i).setWidth(this.groupHeaders.get(i).getWidth()*avgWidth);
             header.addElement(this.groupHeaders.get(i));
         }
         for (int i=0;i<headers.size();i++) {
-            this.headers.get(i).setWidth(MAX_WIDTH/fields.size());
-            this.headers.get(i).setX((MAX_WIDTH/fields.size())*i);
+            this.headers.get(i).setWidth(avgWidth);
+            this.headers.get(i).setX(avgWidth*i);
             this.header.addElement(headers.get(i));
         }
         for (int i=0;i<fields.size();i++) {
-            this.fields.get(i).setWidth(MAX_WIDTH/fields.size());
-            this.fields.get(i).setX((MAX_WIDTH/fields.size())*i);
+            this.fields.get(i).setWidth(avgWidth);
+            this.fields.get(i).setX(avgWidth*i);
             this.field.addElement(fields.get(i));
         }
 
