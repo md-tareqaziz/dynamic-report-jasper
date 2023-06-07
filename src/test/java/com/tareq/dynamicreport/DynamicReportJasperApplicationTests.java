@@ -39,11 +39,13 @@ class DynamicReportJasperApplicationTests {
 //		parameters.put("designation", "DESIGNATION");
 //		parameters.put("salary", "Salary");
 
-		JasperDesignBuilder jasperDesignBuilder=new JasperDesignBuilder("hello")
-				.addTitle("Heloo")
+		JasperDesignBuilder jasperDesignBuilder=new JasperDesignBuilder()
+				.addTitle("Sample dynamic report")
+				.addReportName("Employee details report")
+				.addCriteriaDetails("Employee details criteria")
 				.addColumn("ID", "id", Integer.class, 10)
+				.addGroup(2,"Profile")
 				.addColumn("Name", "name", String.class, 10)
-				.addGroup(2,"Job")
 				.addColumn("Designation", "designation", String.class, 10)
 				.addColumn("Salary", "salary", String.class, 10)
 				.addColumn("DOB", "doj", String.class, 10)
