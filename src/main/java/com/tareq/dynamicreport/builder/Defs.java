@@ -14,8 +14,9 @@ public class Defs {
     public static Integer HEIGHT_CRITERIA_DEFAULT = 30;
     public static Float FONT_SIZE_DEFAULT = 22f;
     public static Float FONT_SIZE_TITLE_DEFAULT = 22f;
-    public static Float FONT_SIZE_REPORTNAME_DEFAULT = 18f;
-    public static Float FONT_SIZE_CRITERIA_DEFAULT = 12f;
+    public static Float FONT_SIZE_REPORTNAME_DEFAULT = 15f;
+    public static Float FONT_SIZE_CRITERIA_DEFAULT = 10f;
     public static Color BACKGROUND_HEADER_COLOR=Color.LIGHT_GRAY;
     public static Color FOREGROUND_HEADER_COLOR=Color.BLACK;
+    public static Integer WIDTH_DATE_DEFAULT=100;
 }

@@ -199,8 +199,20 @@ public class JasperDesignBuilder<T> {
         criteria.setWidth(WIDTH_MAX);
         criteria.setHorizontalTextAlign(HorizontalTextAlignEnum.LEFT);
         criteria.setFontSize(FONT_SIZE_CRITERIA_DEFAULT);
-
         reportNameBand.addElement(criteria);
+
+        JRDesignTextField date = new JRDesignTextField();
+        date.setBlankWhenNull(true);
+        date.setX(WIDTH_MAX-WIDTH_DATE_DEFAULT);
+        date.setY((reportNameBand.getElements().length>0)?HEIGHT_CRITERIA_DEFAULT+MARGIN_DEFAULT:0);
+        date.setWidth(WIDTH_DATE_DEFAULT);
+        date.setHeight(HEIGHT_CRITERIA_DEFAULT);
+        date.setHorizontalTextAlign(HorizontalTextAlignEnum.RIGHT);
+//        tfc5.setStyle(mystyle);
+        date.setExpression(new JRDesignExpression("new java.util.Date()"));
+
+        reportNameBand.addElement(date);
+
 
         return this;
     }
@@ -215,19 +227,6 @@ public class JasperDesignBuilder<T> {
 
     public JasperDesignBuilder addPageFooter() {
         footer.setHeight(30);
-
-        JRDesignTextField tfc5 = new JRDesignTextField();
-        tfc5.setBlankWhenNull(true);
-        tfc5.setX(0);
-        tfc5.setY(0);
-        tfc5.setWidth(100);
-        tfc5.setHeight(30);
-        tfc5.setHorizontalTextAlign(HorizontalTextAlignEnum.LEFT);
-//        tfc5.setStyle(mystyle);
-        tfc5.setExpression(new JRDesignExpression("new java.util.Date()"));
-
-        footer.addElement(tfc5);
-
 
         JRDesignTextField tfc6 = new JRDesignTextField();
         tfc6.setBlankWhenNull(true);
