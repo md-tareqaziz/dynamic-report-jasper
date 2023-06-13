@@ -14,13 +14,12 @@ import net.sf.jasperreports.export.SimpleXlsxReportConfiguration;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.List;
 
 import static com.tareq.dynamicreport.builder.Defs.*;
 
-public class JasperDesignBuilder<T> {
+public class DynamicReportBuilder<T> {
     private Integer GROUP_HEADER_COUNT = 0;
     private Integer COLUMN_COUNT = 0;
     protected final JasperDesign DESIGN = new JasperDesign();
@@ -46,10 +45,10 @@ public class JasperDesignBuilder<T> {
     private Map<String, Integer> GROUP_MAP = new HashMap<>();
     List<String> WHITELIST = new ArrayList<>();
 
-    public JasperDesignBuilder() {
+    public DynamicReportBuilder() {
     }
 
-    public JasperDesignBuilder createReportFromObject(List<T> dataList) throws JRException, IllegalAccessException, NoSuchFieldException {
+    public DynamicReportBuilder createReportFromObject(List<T> dataList) throws JRException, IllegalAccessException, NoSuchFieldException {
         Object data = dataList.get(0);
 
         //counting groups
@@ -70,7 +69,7 @@ public class JasperDesignBuilder<T> {
         return this;
     }
 
-    public JasperDesignBuilder createReportFromObject(List<T> dataList, List<String> whiteList) throws JRException, IllegalAccessException, NoSuchFieldException {
+    public DynamicReportBuilder createReportFromObject(List<T> dataList, List<String> whiteList) throws JRException, IllegalAccessException, NoSuchFieldException {
         Object data = dataList.get(0);
 
         //counting groups
@@ -125,7 +124,7 @@ public class JasperDesignBuilder<T> {
         }
     }
 
-    public JasperDesignBuilder addColumn(String title, String property, Class className, int width) throws JRException {
+    public DynamicReportBuilder addColumn(String title, String property, Class className, int width) throws JRException {
         DESIGN.setOrientation(OrientationEnum.PORTRAIT);
 
         //dynamically creating header
@@ -152,7 +151,7 @@ public class JasperDesignBuilder<T> {
         return this;
     }
 
-    public JasperDesignBuilder addGroup(Integer numberOfHeader, String subHeaderTitle) throws JRException {
+    public DynamicReportBuilder addGroup(Integer numberOfHeader, String subHeaderTitle) throws JRException {
         HAVING_SUBHEADER = true;
         if (GROUP_HEADER_COUNT > 0) {
             throw new RuntimeException("Columns of previous group still pending.");
@@ -230,12 +229,12 @@ public class JasperDesignBuilder<T> {
     }
 
 
-    public JasperDesignBuilder addType(String type) {
+    public DynamicReportBuilder addType(String type) {
         this.TYPE = type;
         return this;
     }
 
-    public JasperDesignBuilder addTitle(String title) {
+    public DynamicReportBuilder addTitle(String title) {
         JRDesignBand titleBand = new JRDesignBand();
         titleBand.setHeight(HEIGHT_TITLE_DEFAULT);
 
@@ -253,7 +252,7 @@ public class JasperDesignBuilder<T> {
         return this;
     }
 
-    public JasperDesignBuilder addReportName(String reportName) {
+    public DynamicReportBuilder addReportName(String reportName) {
 
         NAME_BAND.setHeight(HEIGHT_REPORT_DEFAULT + MARGIN_DEFAULT);
 
@@ -271,7 +270,7 @@ public class JasperDesignBuilder<T> {
         return this;
     }
 
-    public JasperDesignBuilder addCriteriaDetails(String criteriaDetails) {
+    public DynamicReportBuilder addCriteriaDetails(String criteriaDetails) {
 
         NAME_BAND.setHeight(NAME_BAND.getHeight() + HEIGHT_CRITERIA_DEFAULT + MARGIN_DEFAULT);
 
@@ -309,7 +308,7 @@ public class JasperDesignBuilder<T> {
         box.getBottomPen().setLineWidth(1);
     }
 
-    public JasperDesignBuilder addPageFooter() {
+    public DynamicReportBuilder addPageFooter() {
         FOOTER_BAND.setHeight(30);
 
         JRDesignTextField tfc6 = new JRDesignTextField();
@@ -336,7 +335,7 @@ public class JasperDesignBuilder<T> {
 //        return this;
 //    }
 
-    public JasperDesignBuilder addNoData() {
+    public DynamicReportBuilder addNoData() {
         NO_DATA.setHeight(30);
 
         JRDesignStaticText tfc5 = new JRDesignStaticText();
@@ -354,12 +353,12 @@ public class JasperDesignBuilder<T> {
         return this;
     }
 
-    public JasperDesignBuilder addData(List<T> list) {
+    public DynamicReportBuilder addData(List<T> list) {
         this.DATA_LIST = list;
         return this;
     }
 
-    public JasperDesignBuilder build() throws JRException {
+    public DynamicReportBuilder build() throws JRException {
         int avgWidth = WIDTH_MAX / FIELDS.size();
         for (int i = 0; i < GROUP_HEADERS.size(); i++) {
             this.GROUP_HEADERS.get(i).setX(GROUP_HEADER_POSITIONS.get(i) * avgWidth);

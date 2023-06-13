@@ -1,16 +1,10 @@
 package com.tareq.dynamicreport;
 
-import com.tareq.dynamicreport.builder.JasperDesignBuilder;
+import com.tareq.dynamicreport.builder.DynamicReportBuilder;
 import net.sf.jasperreports.engine.*;
-import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
-import net.sf.jasperreports.engine.design.JasperDesign;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.UrlResource;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
 @SpringBootTest
@@ -39,7 +33,7 @@ class DynamicReportJasperApplicationTests {
 //		parameters.put("designation", "DESIGNATION");
 //		parameters.put("salary", "Salary");
 
-		JasperDesignBuilder jasperDesignBuilder=new JasperDesignBuilder()
+		DynamicReportBuilder dynamicReportBuilder =new DynamicReportBuilder()
 				.addTitle("Sample dynamic report")
 				.addReportName("Employee details report")
 				.addCriteriaDetails("Employee details criteria")
@@ -54,7 +48,7 @@ class DynamicReportJasperApplicationTests {
 				.addPageFooter()
 				.build();
 
-		jasperDesignBuilder.print("employees.pdf");
+		dynamicReportBuilder.print("employees.pdf");
 
 
 //		JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesignBuilder);
@@ -71,9 +65,6 @@ class DynamicReportJasperApplicationTests {
 	@Test
 	void testGenericDynamicReport() throws NoSuchFieldException, IllegalAccessException, JRException {
 
-		List<String> sl=new ArrayList<>();
-		sl.add("1");
-		sl.add("2");
 		List<Employee> employees = Arrays.asList(
 //				new Employee(1, "Ismail Hossain", "Software Engg.", "200.00", sl),
 //				new Employee(2, "Shakil", "Software Engg.", "200.00", sl),
@@ -91,11 +82,11 @@ class DynamicReportJasperApplicationTests {
 		List<String> whitelist=new ArrayList<>();
 		whitelist.add("id");
 		whitelist.add("name");
-		whitelist.add("details");
 		whitelist.add("group_designation");
 		whitelist.add("group_salary");
+		whitelist.add("details");
 
-		JasperDesignBuilder jasperDesignBuilder=new JasperDesignBuilder()
+		DynamicReportBuilder dynamicReportBuilder =new DynamicReportBuilder()
 				.addTitle("Sample dynamic report")
 				.addReportName("Employee details report")
 				.addCriteriaDetails("Employee details criteria")
@@ -104,7 +95,7 @@ class DynamicReportJasperApplicationTests {
 				.addPageFooter()
 				.build();
 
-		jasperDesignBuilder.print("employees.pdf");
+		dynamicReportBuilder.print("employees.pdf");
 
 	}
 
